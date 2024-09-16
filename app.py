@@ -3,27 +3,24 @@ from flask import Flask, render_template, request
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
-from xgboost import XGBClassifier  # Import XGBoost
+from xgboost import XGBClassifier  
 
 app = Flask(__name__)
 
-# Load the dataset
+
+# Cleveland dataset from Kaggle
 url = "https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data"
 column_names = ["age", "sex", "cp", "trestbps", "chol", "fbs", "restecg", "thalach", "exang", "oldpeak", "slope", "ca", "thal", "target"]
 data = pd.read_csv(url, names=column_names)
 
-# Replace missing values ('?') with NaN
 data.replace('?', pd.NA, inplace=True)
 
-# Convert columns with missing values to numeric
 data['ca'] = pd.to_numeric(data['ca'])
 data['thal'] = pd.to_numeric(data['thal'])
 
-# Handle missing values using SimpleImputer
 imputer = SimpleImputer(strategy='mean')
 data[['ca', 'thal']] = imputer.fit_transform(data[['ca', 'thal']])
 
-# Encode categorical variables if needed
 data['sex'] = data['sex'].astype(int)
 data['cp'] = data['cp'].astype(int)
 data['fbs'] = data['fbs'].astype(int)
@@ -31,19 +28,15 @@ data['restecg'] = data['restecg'].astype(int)
 data['exang'] = data['exang'].astype(int)
 data['slope'] = data['slope'].astype(int)
 
-# Split the data into features and target
 X = data.drop('target', axis=1)
 y = data['target'].apply(lambda x: 1 if x > 0 else 0)  # Binarize the target
 
-# Split into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Standardize the features
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-# Train the XGBoost model
 model = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
 model.fit(X_train, y_train)
 
